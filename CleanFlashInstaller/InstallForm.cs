@@ -126,7 +126,7 @@ If you ever change your mind, check out Clean Flash Player's website!";
 
             if (pepperBox.Checked || netscapeBox.Checked || activeXBox.Checked) {
                 completeLabel.Text = COMPLETE_INSTALL_TEXT;
-                completeLabel.Links.Add(new LinkLabel.Link(191, 28));
+                completeLabel.Links.Add(new LinkLabel.Link(187, 28));
             } else {
                 completeLabel.Text = COMPLETE_UNINSTALL_TEXT;
                 completeLabel.Links.Add(new LinkLabel.Link(110, 28));

@@ -7,28 +7,17 @@
     <TargetFramework>net40</TargetFramework>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <StartupObject></StartupObject>
-    <Product>Clean Flash Player 34.0.0.308 Installer</Product>
-    <AssemblyTitle>Clean Flash Player 34.0.0.308 Installer</AssemblyTitle>
-    <FileVersion>34.0.0.308</FileVersion>
-    <AssemblyVersion>34.0.0.308</AssemblyVersion>
-    <Version>34.0.0.308</Version>
+    <Product>Clean Flash Player 34.0.0.315 Installer</Product>
+    <AssemblyTitle>Clean Flash Player 34.0.0.315 Installer</AssemblyTitle>
+    <FileVersion>34.0.0.315</FileVersion>
+    <AssemblyVersion>34.0.0.315</AssemblyVersion>
+    <Version>34.0.0.315</Version>
     <Authors>FlashPatch Team</Authors>
     <Company>FlashPatch Team</Company>
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="cleanflash.7z" />
-  </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="IWshRuntimeLibrary">
-      <WrapperTool>tlbimp</WrapperTool>
-      <VersionMinor>0</VersionMinor>
-      <VersionMajor>1</VersionMajor>
-      <Guid>f935dc20-1cf0-11d0-adb9-00c04fd58a0b</Guid>
-      <Lcid>0</Lcid>
-      <Isolated>false</Isolated>
-      <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="icon.ico" />

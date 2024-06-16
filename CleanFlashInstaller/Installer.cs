@@ -1,5 +1,6 @@
 ﻿using CleanFlashCommon;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -7,7 +8,7 @@ using System.Diagnostics;
 using SharpCompress.Archives.SevenZip;
 using SharpCompress.Common;
 using SharpCompress.Readers;
-using IWshRuntimeLibrary;
+using System.Runtime.InteropServices;
 
 namespace CleanFlashInstaller {
     public class Installer {
@@ -84,16 +85,24 @@ namespace CleanFlashInstaller {
         }
 
         public static void CreateShortcut(string folder, string executable, string name, string description) {
-            WshShell wsh = new WshShell();
-            IWshShortcut shortcut = wsh.CreateShortcut(Path.Combine(folder, name + ".lnk")) as IWshShortcut;
+            Type t = Type.GetTypeFromCLSID(new Guid("72C24DD5-D70A-438B-8A42-98424B88AFB8"));
+            dynamic shell = Activator.CreateInstance(t);
 
-            shortcut.Arguments = "";
-            shortcut.TargetPath = executable;
-            shortcut.WindowStyle = (int) WshWindowStyle.WshNormalFocus;
-            shortcut.Description = description;
-            shortcut.WorkingDirectory = Path.GetDirectoryName(executable);
-            shortcut.IconLocation = executable;
-            shortcut.Save();
+            try {
+                var lnk = shell.CreateShortcut(Path.Combine(folder, name + ".lnk"));
+
+                try {
+                    lnk.TargetPath = executable;
+                    lnk.IconLocation = executable;
+                    lnk.Description = description;
+                    lnk.WorkingDirectory = folder;
+                    lnk.Save();
+                } finally {
+                    Marshal.FinalReleaseComObject(lnk);
+                }
+            } finally {
+                Marshal.FinalReleaseComObject(shell);
+            }
         }
 
         private static void InstallFromArchive(SevenZipArchive archive, IProgressForm form, InstallFlags flags) {
