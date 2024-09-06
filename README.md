@@ -16,7 +16,9 @@ Clean Flash Player uses a modified version of this updated Flash Player version,
 
 Google Chrome, Mozilla Firefox and Internet Explorer browser plugins are supported. Clean Flash Player ships with a standalone Flash Projector as well.
 
-**Clean Flash is compatible and tested with Windows XP, Windows Vista, Windows 7, Windows 8.1, Windows 10 and Windows 11**. If attempting to run on Windows XP, download [.NET Framework 4.0](https://dotnet.microsoft.com/download/dotnet-framework/net40) first and optionally update to [.NET Framework 4.0.3](https://www.microsoft.com/en-us/download/details.aspx?id=29053).
+**Clean Flash is compatible and tested with Windows XP, Windows Vista, Windows 7, Windows 8.1, Windows 10 and Windows 11**.
+
+If attempting to run on Windows XP, download [.NET Framework 4.0](https://dotnet.microsoft.com/download/dotnet-framework/net40) first and optionally update to [.NET Framework 4.0.3](https://web.archive.org/web/20200803205224/https://download.microsoft.com/download/3/3/9/3396A3CA-BFE8-4C9B-83D3-CADAE72C17BE/NDP40-KB2600211-x86.exe) (The original link is no longer working, the file is courtesy of the Internet Archive's **Wayback Machine**).
 
 ## Browser compatibility
 
