@@ -374,6 +374,7 @@ namespace CleanFlashInstaller {
             this.prevButton.Name = "prevButton";
             this.prevButton.Size = new System.Drawing.Size(138, 31);
             this.prevButton.TabIndex = 3;
+            this.prevButton.TabStop = false;
             this.prevButton.Text = "QUIT";
             this.prevButton.UseVisualStyleBackColor = false;
             this.prevButton.Click += new System.EventHandler(this.prevButton_Click);
@@ -620,6 +621,7 @@ namespace CleanFlashInstaller {
             this.Name = "InstallForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Clean Flash Player Dev Installer";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.InstallForm_FormClosing);
             this.Load += new System.EventHandler(this.InstallForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.flashLogo)).EndInit();
             this.disclaimerPanel.ResumeLayout(false);

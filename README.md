@@ -36,6 +36,7 @@ To keep using Flash Player on **Mozilla Firefox**, install [**Waterfox Classic**
 - [Otter Browser](https://otter-browser.org)
 - [roytam's XP-compatible browser builds](http://rtfreesoft.blogspot.com)
 - [Portable old browser versions (guide)](https://www.raymond.cc/blog/how-to-enable-flash-support-in-firefox-portable)
+- [Mypal 29.3.0](https://www.mypal-browser.org/download.html)
 
 </details> 
 

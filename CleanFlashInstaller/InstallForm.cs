@@ -293,5 +293,35 @@ If you ever change your mind, check out Clean Flash Player's website!";
             debugChosen = MessageBox.Show("Are you sure you want to install the debug version?\n\nThis version is only meant to be used by experienced developers!\nIf you are not sure, choose No.", "Clean Flash Installer", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
             OpenBeforeInstall();
         }
+
+        private void InstallForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            bool v1 = true;
+            // if installing
+            // note: msgbox not pauses the process
+            if (installPanel.Visible)
+            {
+                if (v1)
+                {
+                    // hardlock, only force quit process
+                    // follows current design since Back button is disabled
+                    MessageBox.Show("Please, wait until process end", "Clean Flash Installer", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    e.Cancel = true;
+                }
+                else
+                // soft alternative, expert mode, todo: better warning of consequences  
+                if (MessageBox.Show("Are you sure you want to interrupt the process ?", "Clean Flash Installer", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+                {
+                    e.Cancel = true;
+                }
+                else
+                {
+                    // use cases ?
+                    // uninstall, currently not implemented
+                }
+
+                //todo: same for uninstaller: share same F
+            }
+        }
     }
 }

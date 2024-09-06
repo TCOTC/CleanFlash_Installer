@@ -41,6 +41,7 @@ namespace CleanFlashUninstaller {
             this.completeLabel = new System.Windows.Forms.LinkLabel();
             this.failurePanel = new System.Windows.Forms.Panel();
             this.copyErrorButton = new CleanFlashCommon.GradientButton();
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.InstallForm_FormClosing);
             this.failureBox = new System.Windows.Forms.TextBox();
             this.failureText = new System.Windows.Forms.Label();
             this.nextButton = new CleanFlashCommon.GradientButton();
@@ -242,6 +243,7 @@ namespace CleanFlashUninstaller {
             // 
             // prevButton
             // 
+            prevButton.TabStop = false;
             this.prevButton.BackColor = System.Drawing.Color.Black;
             this.prevButton.Color1 = System.Drawing.Color.FromArgb(((int)(((byte)(118)))), ((int)(((byte)(118)))), ((int)(((byte)(118)))));
             this.prevButton.Color2 = System.Drawing.Color.FromArgb(((int)(((byte)(81)))), ((int)(((byte)(81)))), ((int)(((byte)(81)))));
