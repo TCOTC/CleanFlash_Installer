@@ -7,11 +7,11 @@
     <TargetFramework>net40</TargetFramework>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <StartupObject></StartupObject>
-    <Product>Clean Flash Player 34.0.0.325 Installer</Product>
-    <AssemblyTitle>Clean Flash Player 34.0.0.325 Installer</AssemblyTitle>
-    <FileVersion>34.0.0.325</FileVersion>
-    <AssemblyVersion>34.0.0.325</AssemblyVersion>
-    <Version>34.0.0.325</Version>
+    <Product>Clean Flash Player 34.0.0.330 Installer</Product>
+    <AssemblyTitle>Clean Flash Player 34.0.0.330 Installer</AssemblyTitle>
+    <FileVersion>34.0.0.330</FileVersion>
+    <AssemblyVersion>34.0.0.330</AssemblyVersion>
+    <Version>34.0.0.330</Version>
     <Authors>FlashPatch Team</Authors>
     <Company>FlashPatch Team</Company>
     <ApplicationIcon>icon.ico</ApplicationIcon>

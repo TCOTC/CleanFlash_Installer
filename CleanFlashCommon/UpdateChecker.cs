@@ -32,11 +32,11 @@ namespace CleanFlashCommon {
     }
 
     public class UpdateChecker {
-        private static readonly string FLASH_VERSION = "34.0.0.325";
-        private static readonly string VERSION = "34.0.0.325";
+        private static readonly string FLASH_VERSION = "34.0.0.330";
+        private static readonly string VERSION = "34.0.0.330";
         private static readonly string AUTHOR = "cleanflash";
         private static readonly string REPO = "installer";
-        private static readonly string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36";
+        private static readonly string USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 
         public static string GetAPILink() {
             return "https://api.github.com/repos/" + AUTHOR + "/" + REPO + "/releases/latest";
