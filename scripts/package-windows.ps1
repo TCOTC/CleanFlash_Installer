@@ -39,6 +39,11 @@ if (-not $PayloadAsset) {
     $PayloadAsset = "ChineseFlash-Patched-Win-$FlashVersion.7z"
 }
 
+$FlashVersion = $FlashVersion.Trim()
+$BuildsTag = $BuildsTag.Trim()
+$PayloadAsset = $PayloadAsset.Trim()
+if (-not $FlashVersion) { throw "FlashVersion is required and cannot be empty." }
+if (-not $BuildsTag) { throw "BuildsTag is required and cannot be empty." }
 if (-not ($FlashVersion -match '^\d+\.\d+\.\d+\.\d+$')) {
     throw "FlashVersion must look like 34.0.0.376, got '$FlashVersion'"
 }

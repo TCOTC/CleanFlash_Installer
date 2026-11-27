@@ -2,19 +2,19 @@
 
 这个分支只加了一套 **非官方** 的 Windows 打包流程，用来从本仓库的 MIT 安装器/卸载器源码，加上 [clean-flash-builds](https://github.com/darktohka/clean-flash-builds) 里已经清理过的播放器文件，打出完整安装包。
 
-它不会自动创建 GitHub Release，也不会改默认分支上的版本号。Flash 二进制和打好的 `cleanflash.7z` / `.exe` 都不会进 Git（仓库里原本就 ignore 了 `*.7z` 和 `*.exe`）。
+打包成功后，工作流会用你填的 `flash_version` 作为 tag，自动发布一个标题带 unofficial 的 GitHub Release，并把安装包附上去。它不会改默认分支上的版本号，也不会覆盖已经存在的同名 tag（例如仓库里已有的 `34.0.0.330`）。Flash 二进制和打好的 `cleanflash.7z` / `.exe` 都不会进 Git（仓库里原本就 ignore 了 `*.7z` 和 `*.exe`）。
 
 ## 怎么跑
 
-在 GitHub 仓库页面打开 **Actions → Package installer → Run workflow**，按需填写：
+在 GitHub 仓库页面打开 **Actions → Package installer → Run workflow**。`builds_tag` 和 `flash_version` 必须手动填非空值，没有默认值：
 
-| 输入 | 默认值 | 含义 |
+| 输入 | 是否必填 | 含义 |
 |---|---|---|
-| `builds_tag` | `v1.54` | clean-flash-builds 的 Release 标签 |
-| `flash_version` | `34.0.0.376` | 写入安装器/卸载器的版本号，也用于拼接文件名 |
-| `payload_asset` | 空 | 留空则下载 `ChineseFlash-Patched-Win-<flash_version>.7z` |
+| `builds_tag` | 必填 | clean-flash-builds 的 Release 标签，例如 `v1.54` |
+| `flash_version` | 必填 | 写入安装器/卸载器的版本号，并作为 GitHub Release / tag，例如 `34.0.0.376` |
+| `payload_asset` | 选填 | 留空则下载 `ChineseFlash-Patched-Win-<flash_version>.7z` |
 
-跑完后在该次 workflow 的 Artifacts 里下载 `CleanFlash_<version>_Installer`。
+跑完后会在仓库的 Releases 页面出现对应版本，同时这次 workflow 的 Artifacts 里也有一份。
 
 也可以在已经装好 Visual Studio / Build Tools、7-Zip 和 MSBuild 的 Windows 机器上本地运行：
 
