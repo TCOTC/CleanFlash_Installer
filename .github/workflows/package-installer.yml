@@ -1,10 +1,17 @@
-# Build an unofficial Clean Flash Player installer from this MIT wrapper
-# plus a payload published on darktohka/clean-flash-builds.
+# Build an unofficial Clean Flash Player installer from the MIT wrapper on
+# master, plus a payload published on darktohka/clean-flash-builds.
 #
-# Run it from the Actions tab: "Package installer" → Run workflow.
+# This workflow file lives on ci/github-actions-packaging, not on the default
+# branch, so the Actions "Run workflow" button may not appear. After a push
+# to that branch registers it, dispatch with GitHub CLI:
+#
+#   gh workflow run package-installer.yml --ref ci/github-actions-packaging \
+#     -f builds_tag=v1.54 -f flash_version=34.0.0.376
+#
 # builds_tag and flash_version must be filled in; there are no defaults.
-# A successful build publishes a GitHub Release (and tag) named after
-# flash_version, marked unofficial. It will not overwrite an existing tag.
+# By default a successful build publishes a GitHub Release (and tag) named
+# after flash_version, marked unofficial. It will not overwrite an existing
+# tag or release. Pass create_release=false to only upload Actions artifacts.
 name: Package installer
 
 on:
@@ -23,13 +30,32 @@ on:
         required: false
         default: ""
         type: string
+      create_release:
+        description: Publish an unofficial GitHub Release (set false to only upload Actions artifacts)
+        required: false
+        type: boolean
+        default: true
+  push:
+    branches:
+      - ci/github-actions-packaging
 
 permissions:
   contents: write
 
 jobs:
+  register:
+    name: Register workflow
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Confirm registration
+        run: echo "Package installer workflow is registered from ${GITHUB_REF} @ ${GITHUB_SHA}"
+
   package:
     name: Build Windows installer
+    if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     steps:
       - name: Check required inputs
@@ -38,27 +64,45 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           INPUT_BUILDS_TAG: ${{ inputs.builds_tag }}
           INPUT_FLASH_VERSION: ${{ inputs.flash_version }}
+          INPUT_CREATE_RELEASE: ${{ inputs.create_release }}
         run: |
           $PSNativeCommandUseErrorActionPreference = $false
           $tag = "$env:INPUT_BUILDS_TAG".Trim()
           $ver = "$env:INPUT_FLASH_VERSION".Trim()
+          $createRelease = "$env:INPUT_CREATE_RELEASE".ToLowerInvariant() -eq "true"
           if (-not $tag) { throw "builds_tag is required and cannot be empty." }
           if (-not $ver) { throw "flash_version is required and cannot be empty." }
           if ($ver -notmatch '^\d+\.\d+\.\d+\.\d+$') {
             throw "flash_version must look like 34.0.0.376, got '$ver'"
           }
-          gh release view $ver --repo "${{ github.repository }}" 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            throw "GitHub Release '$ver' already exists. Choose a new flash_version, or delete that release first."
+          if ($createRelease) {
+            gh release view $ver --repo "${{ github.repository }}" 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              throw "GitHub Release '$ver' already exists. Choose a new flash_version, or delete that release first."
+            }
+            gh api "repos/${{ github.repository }}/git/ref/tags/$ver" 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              throw "Git tag '$ver' already exists on this repo (for example an official backup tag). Choose a new flash_version; this workflow will not overwrite existing tags."
+            }
+          } else {
+            Write-Host "create_release=false; skipping existing release/tag pre-check."
           }
-          gh api "repos/${{ github.repository }}/git/ref/tags/$ver" 2>$null
-          if ($LASTEXITCODE -eq 0) {
-            throw "Git tag '$ver' already exists on this repo (for example an official backup tag). Choose a new flash_version; this workflow will not overwrite existing tags."
-          }
-          Write-Host "inputs ok: builds_tag=$tag flash_version=$ver"
+          Write-Host "inputs ok: builds_tag=$tag flash_version=$ver create_release=$createRelease"
 
-      - name: Checkout
+      - name: Checkout installer source from master
         uses: actions/checkout@v7
+        with:
+          ref: master
+          path: src
+
+      - name: Checkout packaging scripts from this workflow branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          path: ci
+          sparse-checkout: |
+            scripts
+          sparse-checkout-cone-mode: true
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v3
@@ -76,24 +120,25 @@ jobs:
           $tag = "$env:INPUT_BUILDS_TAG".Trim()
           $ver = "$env:INPUT_FLASH_VERSION".Trim()
           $asset = "$env:INPUT_PAYLOAD_ASSET".Trim()
-          ./scripts/package-windows.ps1 `
+          ./ci/scripts/package-windows.ps1 `
             -FlashVersion $ver `
             -BuildsTag $tag `
             -PayloadAsset $asset `
-            -RepoRoot "${{ github.workspace }}"
+            -RepoRoot "${{ github.workspace }}/src"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: CleanFlash_${{ inputs.flash_version }}_Installer
           path: |
-            artifacts/*.exe
-            artifacts/*.7z
-            artifacts/*.sha256
-            artifacts/*.md
+            src/artifacts/*.exe
+            src/artifacts/*.7z
+            src/artifacts/*.sha256
+            src/artifacts/*.md
           if-no-files-found: error
 
       - name: Publish GitHub Release
+        if: inputs.create_release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -102,8 +147,8 @@ jobs:
         run: |
           $tag = "$env:INPUT_BUILDS_TAG".Trim()
           $ver = "$env:INPUT_FLASH_VERSION".Trim()
-          $buildNotes = Get-Content -LiteralPath "$env:GITHUB_WORKSPACE\artifacts\BUILD-NOTES.md" -Raw
-          $notesPath = "$env:GITHUB_WORKSPACE\artifacts\RELEASE-NOTES.md"
+          $buildNotes = Get-Content -LiteralPath "$env:GITHUB_WORKSPACE\src\artifacts\BUILD-NOTES.md" -Raw
+          $notesPath = "$env:GITHUB_WORKSPACE\src\artifacts\RELEASE-NOTES.md"
           @(
             "This is an **unofficial** build from this backup repository. It is not a release from gitlab.com/cleanflash/installer or cdn.cleanflash.org."
             ""
@@ -115,10 +160,10 @@ jobs:
           ) -join "`n" | Set-Content -LiteralPath $notesPath -Encoding utf8
 
           gh release create $ver `
-            "$env:GITHUB_WORKSPACE\artifacts\CleanFlash_${ver}_Installer.exe" `
-            "$env:GITHUB_WORKSPACE\artifacts\cleanflash-$ver.7z" `
-            "$env:GITHUB_WORKSPACE\artifacts\FlashUtil_Uninstall.exe" `
-            "$env:GITHUB_WORKSPACE\artifacts\checksums.sha256" `
-            "$env:GITHUB_WORKSPACE\artifacts\BUILD-NOTES.md" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\CleanFlash_${ver}_Installer.exe" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\cleanflash-$ver.7z" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\FlashUtil_Uninstall.exe" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\checksums.sha256" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\BUILD-NOTES.md" `
             --title "Clean Flash Player $ver (unofficial)" `
             --notes-file $notesPath
