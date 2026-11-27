@@ -1,0 +1,162 @@
+# Build an unofficial Clean Flash Player installer from the MIT wrapper on
+# master, plus a payload published on darktohka/clean-flash-builds.
+#
+# This workflow file lives on ci, not on the default branch, so the
+# Actions "Run workflow" button may not appear. After a push to that
+# branch registers it, dispatch with GitHub CLI:
+#
+#   gh workflow run package-installer.yml --ref ci \
+#     -f builds_tag=v1.54 -f flash_version=34.0.0.376
+#
+# builds_tag and flash_version must be filled in; there are no defaults.
+# By default a successful build publishes a GitHub Release (and tag) named
+# after flash_version, marked unofficial. It will not overwrite an existing
+# tag or release. Pass create_release=false to only upload Actions artifacts.
+name: Package installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      builds_tag:
+        description: clean-flash-builds release tag (required, no default)
+        required: true
+        type: string
+      flash_version:
+        description: Flash version, also used as the GitHub Release tag (required, no default; for example 34.0.0.376)
+        required: true
+        type: string
+      payload_asset:
+        description: Payload asset name (leave empty to use ChineseFlash-Patched-Win-<version>.7z)
+        required: false
+        default: ""
+        type: string
+      create_release:
+        description: Publish an unofficial GitHub Release (set false to only upload Actions artifacts)
+        required: false
+        type: boolean
+        default: true
+  push:
+    branches:
+      - ci
+
+permissions:
+  contents: write
+
+jobs:
+  register:
+    name: Register workflow
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Confirm registration
+        run: echo "Package installer workflow is registered from ${GITHUB_REF} @ ${GITHUB_SHA}"
+
+  package:
+    name: Build Windows installer
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - name: Check required inputs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_BUILDS_TAG: ${{ inputs.builds_tag }}
+          INPUT_FLASH_VERSION: ${{ inputs.flash_version }}
+          INPUT_CREATE_RELEASE: ${{ inputs.create_release }}
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          $tag = "$env:INPUT_BUILDS_TAG".Trim()
+          $ver = "$env:INPUT_FLASH_VERSION".Trim()
+          $createRelease = "$env:INPUT_CREATE_RELEASE".ToLowerInvariant() -eq "true"
+          if (-not $tag) { throw "builds_tag is required and cannot be empty." }
+          if (-not $ver) { throw "flash_version is required and cannot be empty." }
+          if ($ver -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+            throw "flash_version must look like 34.0.0.376, got '$ver'"
+          }
+          if ($createRelease) {
+            gh release view $ver --repo "${{ github.repository }}" *>$null
+            if ($LASTEXITCODE -eq 0) {
+              throw "GitHub Release '$ver' already exists. Choose a new flash_version, or delete that release first."
+            }
+            gh api "repos/${{ github.repository }}/git/ref/tags/$ver" *>$null
+            if ($LASTEXITCODE -eq 0) {
+              throw "Git tag '$ver' already exists on this repo (for example an official backup tag). Choose a new flash_version; this workflow will not overwrite existing tags."
+            }
+          } else {
+            Write-Host "create_release=false; skipping existing release/tag pre-check."
+          }
+          Write-Host "inputs ok: builds_tag=$tag flash_version=$ver create_release=$createRelease"
+          # gh's not-found checks leave LASTEXITCODE=1; do not fail the step on that success path.
+          exit 0
+
+      - name: Checkout installer source from master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          path: src
+
+      - name: Checkout packaging scripts from this workflow branch
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          path: ci
+          sparse-checkout: |
+            scripts
+          sparse-checkout-cone-mode: true
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v3
+
+      - name: Install 7-Zip
+        run: choco install 7zip --no-progress -y
+
+      - name: Package installer
+        shell: pwsh
+        env:
+          INPUT_BUILDS_TAG: ${{ inputs.builds_tag }}
+          INPUT_FLASH_VERSION: ${{ inputs.flash_version }}
+          INPUT_PAYLOAD_ASSET: ${{ inputs.payload_asset }}
+        run: |
+          $tag = "$env:INPUT_BUILDS_TAG".Trim()
+          $ver = "$env:INPUT_FLASH_VERSION".Trim()
+          $asset = "$env:INPUT_PAYLOAD_ASSET".Trim()
+          ./ci/scripts/package-windows.ps1 `
+            -FlashVersion $ver `
+            -BuildsTag $tag `
+            -PayloadAsset $asset `
+            -RepoRoot "${{ github.workspace }}/src"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: CleanFlash_${{ inputs.flash_version }}_Installer
+          path: |
+            src/artifacts/*.exe
+            src/artifacts/*.7z
+            src/artifacts/*.sha256
+            src/artifacts/*.md
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: inputs.create_release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_FLASH_VERSION: ${{ inputs.flash_version }}
+        run: |
+          $ver = "$env:INPUT_FLASH_VERSION".Trim()
+          $notesPath = "$env:GITHUB_WORKSPACE\src\artifacts\BUILD-NOTES.md"
+
+          # Workspace root is not a git checkout (source is in src/, scripts in ci/).
+          gh release create $ver `
+            "$env:GITHUB_WORKSPACE\src\artifacts\CleanFlash_${ver}_Installer.exe" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\cleanflash-$ver.7z" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\FlashUtil_Uninstall.exe" `
+            "$env:GITHUB_WORKSPACE\src\artifacts\checksums.sha256" `
+            $notesPath `
+            --repo "${{ github.repository }}" `
+            --target master `
+            --title "Clean Flash Player $ver (unofficial)" `
+            --notes-file $notesPath
