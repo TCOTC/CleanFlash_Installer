@@ -58,10 +58,10 @@ jobs:
           Write-Host "inputs ok: builds_tag=$tag flash_version=$ver"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Install 7-Zip
         run: choco install 7zip --no-progress -y
@@ -83,7 +83,7 @@ jobs:
             -RepoRoot "${{ github.workspace }}"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: CleanFlash_${{ inputs.flash_version }}_Installer
           path: |
