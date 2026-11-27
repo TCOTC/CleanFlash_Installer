@@ -1,0 +1,62 @@
+# Build an unofficial Clean Flash Player installer from this MIT wrapper
+# plus a payload published on darktohka/clean-flash-builds.
+#
+# Run it from the Actions tab: "Package installer" → Run workflow.
+# It only uploads artifacts; it does not create a GitHub Release.
+name: Package installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      builds_tag:
+        description: clean-flash-builds release tag
+        required: true
+        default: v1.54
+        type: string
+      flash_version:
+        description: Flash version (for example 34.0.0.376)
+        required: true
+        default: 34.0.0.376
+        type: string
+      payload_asset:
+        description: Payload asset name (leave empty to use ChineseFlash-Patched-Win-<version>.7z)
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build Windows installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install 7-Zip
+        run: choco install 7zip --no-progress -y
+
+      - name: Package installer
+        shell: pwsh
+        run: |
+          ./scripts/package-windows.ps1 `
+            -FlashVersion "${{ inputs.flash_version }}" `
+            -BuildsTag "${{ inputs.builds_tag }}" `
+            -PayloadAsset "${{ inputs.payload_asset }}" `
+            -RepoRoot "${{ github.workspace }}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CleanFlash_${{ inputs.flash_version }}_Installer
+          path: |
+            artifacts/*.exe
+            artifacts/*.7z
+            artifacts/*.sha256
+            artifacts/*.md
+          if-no-files-found: error
